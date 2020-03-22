@@ -1,0 +1,102 @@
+<%- include('partials/header') %>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li class="active">
+                        <a href="/airport/list">Airport List</a>
+                    </li>
+                    <li>
+                        <a href="/aircraft/list">Aircraft List</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <div class="airport-list">
+        <button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target="#addAirport">
+            Add Airport
+        </button>
+        <h3 class="text-center">Airport List</h3>
+        <table class="table table-bordered table-list">
+            <thead>
+                <th>Name</th>
+                <th>Fuel Capacity</th>
+                <th>Fuel Available</th>
+            </thead>
+            <tbody>
+                <% for(var i = 0; i < result.length; i++) { %>
+                    <tr>
+                        <td>
+                            <%= result[i].name %>
+                        </td>
+                        <td>
+                            <%= result[i].fuel_capacity %>
+                        </td>
+                        <td>
+                            <%= result[i].fuel_available %>
+                        </td>
+                    </tr>
+                    <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="addAirport" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <form id="addForm" method="POST" action="/airport/add">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Add Airport</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" name="name" placeholder="Name">
+                        <input type="text" name="fuel_capacity" placeholder="Fuel Capacity">
+                        <input type="text" name="fuel_available" placeholder="Fuel Available">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="addBtn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        $('#addBtn').on('click', () => {
+
+            const $fuelCapacity = $('input[name="fuel_capacity"]');
+            const $fuelAvailable = $('input[name="fuel_available"]');
+            let error = false;
+
+            $('#addForm').find('.error').remove();
+
+            if (!/\d+/.test($fuelCapacity.val())) {
+                error = true;
+                $("<p class='error'>Please enter valid fuel capacity</p>").insertAfter($fuelCapacity);
+            }
+
+            if (!/\d+/.test($fuelAvailable.val())) {
+                error = true;
+                $("<p class='error'>Please enter valid fuel available</p>").insertAfter($fuelAvailable);
+            }
+
+            if (!error) {
+                $('#addForm').submit();
+            }
+
+        });
+
+    </script>
+
+    <%- include('partials/footer') %>

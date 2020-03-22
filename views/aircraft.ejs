@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="/airport/list">Airport List</a>
+                    </li>
+                    <li class="active">
+                        <a href="/aircraft/list">Aircraft List</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <div class="airport-list">
+        <button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target="#addAircraft">
+            Add Aircraft
+        </button>
+        <h3 class="text-center">Aircraft List</h3>
+        <table class="table table-bordered table-list">
+            <thead>
+                <th>Airline</th>
+                <th>Flight No.</th>
+                <th>Source</th>
+                <th>Destination</th>
+            </thead>
+            <tbody>
+                <% for(var i = 0; i < result.length; i++) { %>
+                    <tr>
+                        <td>
+                            <%= result[i].airline %>
+                        </td>
+                        <td>
+                            <%= result[i].flight_no %>
+                        </td>
+                        <td>
+                            <%= result[i].source %>
+                        </td>
+                        <td>
+                            <%= result[i].destination %>
+                        </td>
+                    </tr>
+                    <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="addAircraft" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <form id="addForm" method="POST" action="/aircraft/add">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Add Aircraft</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" name="airline" placeholder="Airline Name">
+                        <input type="text" name="flight_no" placeholder="Flight Number">
+                        <input type="text" name="source" placeholder="Source">
+                        <input type="text" name="destination" placeholder="Destination">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="addBtn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>

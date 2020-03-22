@@ -1,0 +1,13 @@
+db.airport.insertMany([{id: 1, name: 'Indira Gandhi International Airport', fuel_capacity: '5000', fuel_available: '4200'},{id: 2, name: 'Amausi Airport', fuel_capacity: '1000', fuel_available: '600'},{id: 3, name: 'Chhatrapati Shivaji Airport', fuel_capacity: '4000', fuel_available: '3000'},{id: 4, name: 'Netaji Subhas Chandra Airport', fuel_capacity: '4500', fuel_available: '4000'},{id: 5, name: 'Gwalior Airport', fuel_capacity: '3000', fuel_available: '2500'}])
+
+db.aircraft.insertMany([{id: 1, airline: 'IndiGo', flight_no: '6E292', source: 'Delhi', destination: 'Mumbai'},{id: 2, airline: 'Go Air', flight_no: '7G123', source: 'Kolkata', destination: 'Chandigarh'},{id: 3, airline: 'Spice Jet', flight_no: '1S555', source: 'Mumbai', destination: 'Kolkata'},{id: 4, airline: 'Air India', flight_no: '6A987', source: 'Lucknow', destination: 'Delhi'},{id: 5, airline: 'Vistara', flight_no: '7V234', source: 'Delhi', destination: 'Guwhati'}])
+
+db.users.insertOne({id: 1, name: 'admin', email: 'admin@test.com', password: 'Password@1'})
+
+/*db.transaction.insertMany([
+    {id: 1, created_at: '', type: '', airport_id: 1', aircraft_id: 1, quantity: '', parent_id: ''},
+    {id: 2, created_at: '', type: '', airport_id: 2', aircraft_id: 4, quantity: '', parent_id: ''},
+    {id: 3, created_at: '', type: '', airport_id: 3', aircraft_id: 3, quantity: '', parent_id: ''},
+    {id: 4, created_at: '', type: '', airport_id: 1', aircraft_id: 5, quantity: '', parent_id: ''},
+    {id: 5, created_at: '', type: '', airport_id: 4', aircraft_id: 2, quantity: '', parent_id: ''},
+])*/
