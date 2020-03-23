@@ -1,0 +1,68 @@
+<%- include('partials/header') %>
+
+    <%- include('partials/navigation', {currentPage: 'report'}) %>
+
+        <div class="main-section">
+            <div class="airport_report">
+                <h3 class="text-center">Airport Summary Report</h3>
+                <table class="table table-bordered table-list">
+                    <thead>
+                        <th>Airport</th>
+                        <th>Fuel Available</th>
+                    </thead>
+                    <tbody>
+                        <% for(var i = 0; i < fuelAvailabilityData.length; i++) { %>
+                            <tr>
+                                <td>
+                                    <%= fuelAvailabilityData[i].name %>
+                                </td>
+                                <td>
+                                    <%= fuelAvailabilityData[i].fuel_available %>
+                                </td>
+                            </tr>
+                            <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="fuel_report" style="margin-top: 30px">
+                <h3 class="text-center">Fuel Consumtion Report</h3>
+                <table class="table table-bordered table-list">
+                    <thead>
+                        <th>Airport</th>
+                        <th>Date/Time</th>
+                        <th>Type</th>
+                        <th>Fuel</th>
+                        <th>Aircraft</th>
+                        <th>Fuel Available</th>
+                    </thead>
+                    <tbody>
+                        <% for(var i = 0; i < fuelConsumptionData.length; i++) { %>
+                            <tr>
+                                <td>
+                                    <%= fuelConsumptionData[i].airport_name %>
+                                </td>
+                                <td>
+                                    <%= fuelConsumptionData[i].transaction_date %>
+                                </td>
+                                <td>
+                                    <%= fuelConsumptionData[i].trans_type %>
+                                </td>
+                                <td>
+                                    <%= fuelConsumptionData[i].quantity %>
+                                </td>
+                                <td>
+                                    <%= fuelConsumptionData[i].airline_no %>
+                                </td>
+                                <td>
+                                    <% const {quantity} = fuelAvailablePerTransaction[fuelConsumptionData[i].airport_id].find(({transaction_id}) => transaction_id == fuelConsumptionData[i].id ) %>
+                                    <%= quantity %>
+                                </td>
+                            </tr>
+                            <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <%- include('partials/footer') %>

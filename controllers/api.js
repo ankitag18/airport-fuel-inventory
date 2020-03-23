@@ -36,13 +36,12 @@ module.exports = function (app) {
     app.post('/airport/add', (req, res) => {
         const name = req.body.name;
         const fuel_capacity = req.body.fuel_capacity;
-        const fuel_available = req.body.fuel_available;
 
         AirportModel.getNextSequenceId(function (dataId) {
             return dataId;
         }).then((dataId) => {
 
-            AirportModel.create({ id: dataId, name, fuel_available, fuel_capacity }).then((result) => {
+            AirportModel.create({ id: dataId, name, fuel_capacity }).then((result) => {
                 res.redirect('/airport/list');
             }).catch((err) => {
                 res.json(err.message);
@@ -142,7 +141,13 @@ module.exports = function (app) {
                     { $sort: { created_at: -1 } },
 
                 ]).then((response) => {
-                    callback(null, response)
+
+                    const transactionData = response.map((item) => {
+                        item['transaction_date'] = new Date(item.created_at).toLocaleString();
+                        return item;
+                    });
+
+                    callback(null, transactionData)
                 }).catch((err) => {
                     res.json(err.message);
                 });
@@ -172,8 +177,7 @@ module.exports = function (app) {
             TransactionModel.create({
                 id: dataId, airport_id, aircraft_id, trans_type, quantity, parent_id, created_at
             }).then((result) => {
-                res.json(result);
-                // res.redirect('/transaction/list');
+                res.redirect('/transaction/list');
             }).catch((err) => {
                 res.json(err.message);
             });
@@ -181,6 +185,138 @@ module.exports = function (app) {
         }).catch((err) => {
             res.json(err.message);
         });
+    });
+
+    app.get('/reports', (req, res) => {
+        async.parallel({
+            fuelAvailabilityData: function (callback) {
+                TransactionModel.aggregate([
+                    {
+                        $lookup: {
+                            from: 'airport',
+                            localField: 'airport_id',
+                            foreignField: 'id',
+                            as: 'airport',
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: "$airport.id",
+                            name: { $first: "$airport.name" },
+                            total_fuel_in: {
+                                $sum:
+                                {
+                                    $cond: [
+                                        { $eq: ["$trans_type", 'IN'] },
+                                        "$quantity",
+                                        0
+                                    ]
+                                }
+                            },
+                            total_fuel_out: {
+                                $sum:
+                                {
+                                    $cond: [
+                                        { $eq: ["$trans_type", 'OUT'] },
+                                        "$quantity",
+                                        0
+                                    ]
+                                }
+                            },
+                        }
+                    },
+                    {
+                        $addFields: {
+                            fuel_available: { $subtract: ["$total_fuel_in", "$total_fuel_out"] }
+                        }
+                    }
+                ]).then((response) => {
+                    callback(null, response)
+                })
+            },
+            fuelConsumptionData: function (callback) {
+                TransactionModel.aggregate([
+                    {
+                        $lookup: {
+                            from: 'airport',
+                            localField: 'airport_id',
+                            foreignField: 'id',
+                            as: 'airport',
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$airport",
+                            preserveNullAndEmptyArrays: true
+                        }
+                    },
+
+                    {
+                        $lookup: {
+                            from: 'aircraft',
+                            localField: 'aircraft_id',
+                            foreignField: 'id',
+                            as: 'aircraft',
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$aircraft",
+                            preserveNullAndEmptyArrays: true
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: "$id",
+                            id: { $first: "$id" },
+                            airport_id: { $first: "$airport.id" },
+                            airport_name: { $first: "$airport.name" },
+                            airline_no: { $first: "$aircraft.flight_no" },
+                            quantity: { $first: "$quantity" },
+                            trans_type: { $first: "$trans_type" },
+                            created_at: { $first: "$created_at" },
+                            parent_transaction: { $first: "$parent_id" },
+                        }
+                    },
+                    { $sort: { 'airport_id': 1, created_at: 1 } },
+                ]).then((response) => {
+                    const fuelAvailablePerTransaction = {};
+
+                    const transactionData = response.map((item) => {
+                        item['transaction_date'] = new Date(item.created_at).toLocaleString();
+
+                        if (item.airport_id in fuelAvailablePerTransaction) {
+                            const airportTransactions = fuelAvailablePerTransaction[item.airport_id];
+                            let currentQuantity = 0;
+                            airportTransactions.forEach(currentItem => {
+                                currentQuantity = currentItem['quantity'];
+                            });
+
+                            if (item.trans_type == 'IN') {
+                                fuelAvailablePerTransaction[item.airport_id].push({ transaction_id: item.id, quantity: Number(currentQuantity) + Number(item.quantity) });
+                            } else if (item.trans_type == 'OUT') {
+                                fuelAvailablePerTransaction[item.airport_id].push({ transaction_id: item.id, quantity: Number(currentQuantity) - Number(item.quantity) });
+                            }
+
+                        } else {
+                            fuelAvailablePerTransaction[item.airport_id] = [];
+                            fuelAvailablePerTransaction[item.airport_id].push({ transaction_id: item.id, quantity: item.quantity });
+                        }
+
+                        return item;
+                    });
+
+                    callback(null, { transactionData, fuelAvailablePerTransaction });
+                })
+            }
+        }, function (error, results) {
+            if (error) {
+                throw error;
+            }
+
+            res.render('report', { fuelAvailabilityData: results.fuelAvailabilityData, fuelConsumptionData: results.fuelConsumptionData.transactionData, fuelAvailablePerTransaction: results.fuelConsumptionData.fuelAvailablePerTransaction });
+        });
+
     });
 
 }

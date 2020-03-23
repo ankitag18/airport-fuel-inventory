@@ -11,7 +11,6 @@
                 <thead>
                     <th>Name</th>
                     <th>Fuel Capacity</th>
-                    <th>Fuel Available</th>
                 </thead>
                 <tbody>
                     <% for(var i = 0; i < result.length; i++) { %>
@@ -21,9 +20,6 @@
                             </td>
                             <td>
                                 <%= result[i].fuel_capacity %>
-                            </td>
-                            <td>
-                                <%= result[i].fuel_available %>
                             </td>
                         </tr>
                         <% } %>
@@ -44,7 +40,6 @@
                         <div class="modal-body">
                             <input type="text" name="name" placeholder="Name">
                             <input type="text" name="fuel_capacity" placeholder="Fuel Capacity">
-                            <input type="text" name="fuel_available" placeholder="Fuel Available">
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
@@ -59,20 +54,20 @@
 
             $('#addBtn').on('click', () => {
 
+                const $name = $('input[name="name"]');
                 const $fuelCapacity = $('input[name="fuel_capacity"]');
-                const $fuelAvailable = $('input[name="fuel_available"]');
                 let error = false;
 
                 $('#addForm').find('.error').remove();
 
+                if ($name.val() == '') {
+                    error = true;
+                    $("<p class='error'>Please enter name</p>").insertAfter($name);
+                }
+
                 if (!/\d+/.test($fuelCapacity.val())) {
                     error = true;
                     $("<p class='error'>Please enter valid fuel capacity</p>").insertAfter($fuelCapacity);
-                }
-
-                if (!/\d+/.test($fuelAvailable.val())) {
-                    error = true;
-                    $("<p class='error'>Please enter valid fuel available</p>").insertAfter($fuelAvailable);
                 }
 
                 if (!error) {

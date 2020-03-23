@@ -5,7 +5,6 @@ const airportSchema = new db.Schema(
         id: { type: Number, default: 0 },
         name: String,
         fuel_capacity: { type: Number, default: 0 },
-        fuel_available: { type: Number, default: 0 },
     },
     {
         collection: 'airport'
