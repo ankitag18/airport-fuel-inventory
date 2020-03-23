@@ -4,7 +4,11 @@ const transactionSchema = new db.Schema(
     {
         id: { type: Number, default: 0 },
         created_at: Number,
-        type: String,//(IN / OUT - In case of reverse transation, change type from IN>OUT or OUT>IN )
+        trans_type: {
+            type: String,
+            enum: ['IN', 'OUT'],
+            default: 'IN'
+        },//(IN / OUT - In case of reverse transation, change type from IN>OUT or OUT>IN )
         airport_id: Number,
         aircraft_id: Number, //(required in case of transaction_type = OUT)
         quantity: Number,

@@ -1,0 +1,161 @@
+<%- include('partials/header') %>
+
+    <%- include('partials/navigation', {currentPage: 'transaction'}) %>
+
+        <div class="main-section">
+            <button type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target="#addTransaction">
+                Add Transaction
+            </button>
+            <h3 class="text-center">Transaction List</h3>
+            <table class="table table-bordered table-list">
+                <thead>
+                    <th>Transaction ID</th>
+                    <th>Airport</th>
+                    <th>Airline</th>
+                    <th>Quantity</th>
+                    <th>Transaction Type</th>
+                    <th>Transaction Date</th>
+                    <th>Parent Transaction</th>
+                </thead>
+                <tbody>
+                    <% for(var i = 0; i < transactions.length; i++) { %>
+                        <tr>
+                            <td>
+                                <%= transactions[i].id %>
+                            </td>
+                            <td>
+                                <%= transactions[i].airport_name %>
+                            </td>
+                            <td>
+                                <%= transactions[i].airline_name %>
+                            </td>
+                            <td>
+                                <%= transactions[i].quantity %>
+                            </td>
+                            <td>
+                                <%= transactions[i].trans_type %>
+                            </td>
+                            <td>
+                                <%= transactions[i].created_at %>
+                            </td>
+                            <td>
+                                <%= transactions[i].parent_transaction %>
+                            </td>
+                        </tr>
+                        <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal -->
+        <div id="addTransaction" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <form id="addForm" method="POST" action="/transaction/add">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">Add Transaction</h4>
+                        </div>
+                        <div class="modal-body">
+                            <select name="trans_type">
+                                <option value="">Select Transaction Type</option>
+                                <option value="IN">IN</option>
+                                <option value="OUT">OUT</option>
+                            </select>
+
+                            <select name="airport">
+                                <option value="">Select Airport</option>
+                                <% for(var i = 0; i < airports.length; i++) { %>
+                                    <option value="<%= airports[i].id %>">
+                                        <%= airports[i].name %>
+                                    </option>
+                                    <% } %>
+                            </select>
+
+                            <select name="aircraft">
+                                <option value="">Select Airline</option>
+                                <% for(var i = 0; i < aircrafts.length; i++) { %>
+                                    <option value="<%= aircrafts[i].id %>">
+                                        <%= aircrafts[i].airline %>
+                                    </option>
+                                    <% } %>
+                            </select>
+
+                            <input type="text" name="quantity" placeholder="Quantity">
+
+                            <select name="transaction" style="display: none">
+                                <option value="">Select Parent Transaction</option>
+                                <% for(var i = 0; i < transactions.length; i++) { %>
+                                    <option value="<%= transactions[i].id %>">
+                                        <%= transactions[i].id %>
+                                    </option>
+                                    <% } %>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="addBtn">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+
+            const $airport = $('select[name="airport"]');
+            const $aircraft = $('select[name="aircraft"]');
+            const $quantity = $('input[name="quantity"]');
+            const $trans_type = $('select[name="trans_type"]');
+            const $transaction = $('select[name="transaction"]');
+
+            $trans_type.on('click', function () {
+                if ($(this).val() == 'OUT') {
+                    $transaction.show();
+                } else {
+                    $transaction.hide();
+                }
+
+            })
+
+            $('#addBtn').on('click', () => {
+
+                let error = false;
+
+                $('#addForm').find('.error').remove();
+
+                if ($trans_type.val() == '') {
+                    error = true;
+                    $("<p class='error'>Please select transaction type</p>").insertAfter($trans_type);
+                }
+
+                if ($airport.val() == '') {
+                    error = true;
+                    $("<p class='error'>Please select airport</p>").insertAfter($airport);
+                }
+
+                if ($aircraft.val() == '' && $trans_type.val() == 'OUT') {
+                    error = true;
+                    $("<p class='error'>Please select airline when reversing the transaction</p>").insertAfter($aircraft);
+                }
+
+                if (!/\d+/.test($quantity.val())) {
+                    error = true;
+                    $("<p class='error'>Please enter valid quantity</p>").insertAfter($quantity);
+                }
+
+                if ($transaction.val() == '' && $trans_type.val() == 'OUT') {
+                    error = true;
+                    $("<p class='error'>Please select transaction to be reversed</p>").insertAfter($transaction);
+                }
+
+                if (!error) {
+                    $('#addForm').submit();
+                }
+
+            });
+
+        </script>
+
+        <%- include('partials/footer') %>
