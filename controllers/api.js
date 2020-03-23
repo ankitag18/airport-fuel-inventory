@@ -287,10 +287,7 @@ module.exports = function (app) {
 
                         if (item.airport_id in fuelAvailablePerTransaction) {
                             const airportTransactions = fuelAvailablePerTransaction[item.airport_id];
-                            let currentQuantity = 0;
-                            airportTransactions.forEach(currentItem => {
-                                currentQuantity = currentItem['quantity'];
-                            });
+                            const currentQuantity = airportTransactions[airportTransactions.length - 1].quantity;
 
                             if (item.trans_type == 'IN') {
                                 fuelAvailablePerTransaction[item.airport_id].push({ transaction_id: item.id, quantity: Number(currentQuantity) + Number(item.quantity) });
