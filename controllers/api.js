@@ -3,10 +3,16 @@ const AirportModel = require('../models/airport');
 const AircraftModel = require('../models/aircraft');
 const TransactionModel = require('../models/transaction');
 const async = require('async');
+const checkAuthentication = require('../middleware/checkAuthentication');
 
 module.exports = function (app) {
 
     app.get('/', (req, res) => {
+
+        if (req.session.email) {
+            return res.redirect('/airport/list');
+        }
+
         res.render('login', { error: '' });
     });
 
@@ -14,9 +20,16 @@ module.exports = function (app) {
         const email = req.body.email;
         const password = req.body.password;
 
+        if (req.session.email) {
+            return res.redirect('/airport/list');
+        }
+
         UserModel.findOne({ email, password }).then((result) => {
             if (result) {
-                res.redirect('/airport/list');
+                sessionData = req.session;
+                sessionData.email = email;
+
+                return res.redirect('/airport/list');
             }
 
             res.render('login', { error: 'Invalid email or password' });
@@ -25,7 +38,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/airport/list', (req, res) => {
+    app.get('/airport/list', checkAuthentication, (req, res) => {
         AirportModel.find({}).sort({ name: 1 }).then((result) => {
             res.render('airport', { result });
         }).catch((err) => {
@@ -33,7 +46,7 @@ module.exports = function (app) {
         });
     });
 
-    app.post('/airport/add', (req, res) => {
+    app.post('/airport/add', checkAuthentication, (req, res) => {
         const name = req.body.name;
         const fuel_capacity = req.body.fuel_capacity;
 
@@ -53,7 +66,7 @@ module.exports = function (app) {
 
     });
 
-    app.get('/aircraft/list', (req, res) => {
+    app.get('/aircraft/list', checkAuthentication, (req, res) => {
         AircraftModel.find({}).sort({ flight_no: 1 }).then((result) => {
             res.render('aircraft', { result });
         }).catch((err) => {
@@ -61,7 +74,7 @@ module.exports = function (app) {
         });
     });
 
-    app.post('/aircraft/add', (req, res) => {
+    app.post('/aircraft/add', checkAuthentication, (req, res) => {
         const airline = req.body.airline;
         const flight_no = req.body.flight_no;
         const source = req.body.source;
@@ -82,7 +95,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/transaction/list', (req, res) => {
+    app.get('/transaction/list', checkAuthentication, (req, res) => {
 
         async.parallel({
             airports: function (callback) {
@@ -162,7 +175,7 @@ module.exports = function (app) {
 
     });
 
-    app.post('/transaction/add', (req, res) => {
+    app.post('/transaction/add', checkAuthentication, (req, res) => {
         const airport_id = req.body.airport;
         const aircraft_id = req.body.aircraft;
         const trans_type = req.body.trans_type;
@@ -187,7 +200,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/reports', (req, res) => {
+    app.get('/reports', checkAuthentication, (req, res) => {
         async.parallel({
             fuelAvailabilityData: function (callback) {
                 TransactionModel.aggregate([
@@ -314,6 +327,15 @@ module.exports = function (app) {
             res.render('report', { fuelAvailabilityData: results.fuelAvailabilityData, fuelConsumptionData: results.fuelConsumptionData.transactionData, fuelAvailablePerTransaction: results.fuelConsumptionData.fuelAvailablePerTransaction });
         });
 
+    });
+
+    app.get('/logout', (req, res) => {
+        req.session.destroy((err) => {
+            if (err) {
+                throw err;
+            }
+            res.redirect('/');
+        });
     });
 
 }
