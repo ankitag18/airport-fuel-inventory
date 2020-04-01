@@ -3,50 +3,35 @@ const AirportModel = require('../models/airport');
 const AircraftModel = require('../models/aircraft');
 const TransactionModel = require('../models/transaction');
 const async = require('async');
-const checkAuthentication = require('../middleware/checkAuthentication');
 
 module.exports = function (app) {
-
-    app.get('/', (req, res) => {
-
-        if (req.session.email) {
-            return res.redirect('/airport/list');
-        }
-
-        res.render('login', { error: '' });
-    });
 
     app.post('/login', (req, res) => {
         const email = req.body.email;
         const password = req.body.password;
 
-        if (req.session.email) {
-            return res.redirect('/airport/list');
-        }
-
         UserModel.findOne({ email, password }).then((result) => {
+            const response = { success: false, data: {}, msg: 'Please enter valid username or password.' }
             if (result) {
-                sessionData = req.session;
-                sessionData.email = email;
-
-                return res.redirect('/airport/list');
+                response.data = result;
+                response.success = true;
             }
 
-            res.render('login', { error: 'Invalid email or password' });
+            res.json(response);
         }).catch((err) => {
             res.json(err.message);
         });
     });
 
-    app.get('/airport/list', checkAuthentication, (req, res) => {
+    app.get('/airport/list', (req, res) => {
         AirportModel.find({}).sort({ name: 1 }).then((result) => {
-            res.render('airport', { result });
+            res.json(result);
         }).catch((err) => {
             res.json(err.message);
         });
     });
 
-    app.post('/airport/add', checkAuthentication, (req, res) => {
+    app.post('/airport/add', (req, res) => {
         const name = req.body.name;
         const fuel_capacity = req.body.fuel_capacity;
 
@@ -55,7 +40,7 @@ module.exports = function (app) {
         }).then((dataId) => {
 
             AirportModel.create({ id: dataId, name, fuel_capacity }).then((result) => {
-                res.redirect('/airport/list');
+                res.json(result);
             }).catch((err) => {
                 res.json(err.message);
             });
@@ -66,15 +51,15 @@ module.exports = function (app) {
 
     });
 
-    app.get('/aircraft/list', checkAuthentication, (req, res) => {
+    app.get('/aircraft/list', (req, res) => {
         AircraftModel.find({}).sort({ flight_no: 1 }).then((result) => {
-            res.render('aircraft', { result });
+            res.json(result);
         }).catch((err) => {
             res.json(err.message);
         });
     });
 
-    app.post('/aircraft/add', checkAuthentication, (req, res) => {
+    app.post('/aircraft/add', (req, res) => {
         const airline = req.body.airline;
         const flight_no = req.body.flight_no;
         const source = req.body.source;
@@ -85,7 +70,7 @@ module.exports = function (app) {
         }).then((dataId) => {
 
             AircraftModel.create({ id: dataId, airline, flight_no, source, destination }).then((result) => {
-                res.redirect('/aircraft/list');
+                res.json(result);
             }).catch((err) => {
                 res.json(err.message);
             });
@@ -95,7 +80,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/transaction/list', checkAuthentication, (req, res) => {
+    app.get('/transaction/list', (req, res) => {
 
         async.parallel({
             airports: function (callback) {
@@ -170,12 +155,12 @@ module.exports = function (app) {
                 throw error;
             }
 
-            res.render('transaction', { transactions: results.transactions, airports: results.airports, aircrafts: results.aircrafts });
+            res.json({ transactions: results.transactions, airports: results.airports, aircrafts: results.aircrafts });
         });
 
     });
 
-    app.post('/transaction/add', checkAuthentication, (req, res) => {
+    app.post('/transaction/add', (req, res) => {
         const airport_id = req.body.airport;
         const aircraft_id = req.body.aircraft;
         const trans_type = req.body.trans_type;
@@ -190,7 +175,7 @@ module.exports = function (app) {
             TransactionModel.create({
                 id: dataId, airport_id, aircraft_id, trans_type, quantity, parent_id, created_at
             }).then((result) => {
-                res.redirect('/transaction/list');
+                res.json(result);
             }).catch((err) => {
                 res.json(err.message);
             });
@@ -200,7 +185,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/reports', checkAuthentication, (req, res) => {
+    app.get('/reports', (req, res) => {
         async.parallel({
             fuelAvailabilityData: function (callback) {
                 TransactionModel.aggregate([
@@ -215,7 +200,8 @@ module.exports = function (app) {
                     {
                         $group: {
                             _id: "$airport.id",
-                            name: { $first: "$airport.name" },
+                            id: { $first: { $arrayElemAt: ["$airport.id", 0] } },
+                            name: { $first: { $arrayElemAt: ["$airport.name", 0] } },
                             total_fuel_in: {
                                 $sum:
                                 {
@@ -242,6 +228,9 @@ module.exports = function (app) {
                         $addFields: {
                             fuel_available: { $subtract: ["$total_fuel_in", "$total_fuel_out"] }
                         }
+                    },
+                    {
+                        $project: { _id: 0 }
                     }
                 ]).then((response) => {
                     callback(null, response)
@@ -324,18 +313,9 @@ module.exports = function (app) {
                 throw error;
             }
 
-            res.render('report', { fuelAvailabilityData: results.fuelAvailabilityData, fuelConsumptionData: results.fuelConsumptionData.transactionData, fuelAvailablePerTransaction: results.fuelConsumptionData.fuelAvailablePerTransaction });
+            res.json({ fuelAvailabilityData: results.fuelAvailabilityData, fuelConsumptionData: results.fuelConsumptionData.transactionData, fuelAvailablePerTransaction: results.fuelConsumptionData.fuelAvailablePerTransaction });
         });
 
-    });
-
-    app.get('/logout', (req, res) => {
-        req.session.destroy((err) => {
-            if (err) {
-                throw err;
-            }
-            res.redirect('/');
-        });
     });
 
 }
